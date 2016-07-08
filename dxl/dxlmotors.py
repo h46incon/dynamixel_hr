@@ -121,6 +121,7 @@ class DxlMotorAX18(DxlMotorAXMX):
     documentation_url="http://support.robotis.com/en/product/dynamixel/ax_series/ax-18f.htm"    
     tick_to_rad=0.00506145483078355577307870322862
     tick_to_rpm=0.111
+    joint_pos_range=300
     
     def __init__(self):
         DxlMotorAXMX.__init__(self)
@@ -141,7 +142,8 @@ class DxlMotorMX12W(DxlMotorAXMX):
     model_number=360
     documentation_url="http://support.robotis.com/en/product/dynamixel/mx_series/mx-12w.htm"
     tick_to_rad=0.00153588974175501002769284787627
-    tick_to_rpm=0.053
+    tick_to_rpm=0.114
+    joint_pos_range=360
 
     def __init__(self):
         DxlMotorAXMX.__init__(self)
@@ -162,6 +164,7 @@ class DxlMotorMX28(DxlMotorAXMX):
     documentation_url="http://support.robotis.com/en/product/dynamixel/mx_series/mx-28.htm"
     tick_to_rad=0.00153588974175501002769284787627
     tick_to_rpm=0.114
+    joint_pos_range=360
 
     def __init__(self):
         DxlMotorAXMX.__init__(self)
@@ -182,6 +185,7 @@ class DxlMotorMX64(DxlMotorAXMX):
     documentation_url="http://support.robotis.com/en/product/dynamixel/mx_series/mx-64.htm"
     tick_to_rad=0.00153588974175501002769284787627
     tick_to_rpm=0.114
+    joint_pos_range=360
 
     def __init__(self):
         DxlMotorAXMX.__init__(self)
@@ -202,6 +206,7 @@ class DxlMotorRX64(DxlMotorAXMX):
     documentation_url="http://support.robotis.com/en/product/dynamixel/rx_series/rx-64.htm"
     tick_to_rad=0.00506145483078355577307870322862
     tick_to_rpm=0.111
+    joint_pos_range=300
 
     def __init__(self):
         DxlMotorAXMX.__init__(self)
