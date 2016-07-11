@@ -519,7 +519,20 @@ class DxlChain:
         self.set_reg(id,"goal_pos",pos)
         if blocking:
             self.wait_stopped(ids=id)        
-            
+
+    def get_pos_phy(self, id):
+        """Obtain the current angle of motor"""
+        motor = self.motors[id]
+        pos = self.get_pos(id)
+
+        angle_abs = motor.tick_to_angle * pos
+        angle = angle_abs - (motor.joint_pos_range / 2.0)
+        return angle
+
+    def get_pos(self, id):
+        """Obtain the current postion of motor"""
+        return self.get_reg(id, "present_position")
+
     def get_position(self,ids=None):
         """Obtain the current position from the chain or a set of motors"""
         ids=self.get_motors(ids)
