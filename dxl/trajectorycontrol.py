@@ -7,11 +7,10 @@ TargetInfo = namedtuple("TargetInfo", ["pos", "time"])
 class TrajectoryControl:
 	from timeit import default_timer
 
-	def __init__(self, id, chain):
-		self._id = id  # type: int
+	def __init__(self, chain):
 		self._chain = chain  # type: DxlChain
 
-	def traj_move(self, tar_list):
+	def traj_move(self, id, tar_list):
 		"""
 		:type tar_list: list[TargetInfo]
 		"""
@@ -23,20 +22,19 @@ class TrajectoryControl:
 		beg_time = self.default_timer()
 		for target in tar_list:
 			time_diff = self.default_timer() - beg_time
-			self._move_to(target, time_diff, is_last_target=False)
+			self._move_to(id, target, time_diff, is_last_target=False)
 			next_time = beg_time + target.time
 			while self.default_timer() < next_time:
 				pass
 
 		time_diff = self.default_timer() - beg_time
-		self._move_to(last_tar, time_diff, is_last_target=True)
+		self._move_to(id, last_tar, time_diff, is_last_target=True)
 
-	def _move_to(self, target, traj_time_now, is_last_target):
+	def _move_to(self, id, target, traj_time_now, is_last_target):
 		"""
         :type target: TargetInfo
         """
-		current_pos = self._chain.get_pos_phy(self._id)
-		self._chain.get_pos(self._id)
+		current_pos = self._chain.get_pos_phy(id)
 		pos_diff = target.pos - current_pos
 		time_diff = target.time - traj_time_now
 
@@ -58,7 +56,7 @@ class TrajectoryControl:
 				else:
 					pos = target.pos
 
-		self._chain.goto_phy(self._id, pos, dps, blocking=False)
+		self._chain.goto_phy(id, pos, dps, blocking=False)
 		#print "[%f] pos %f to %f, Goal time: %f, Pos: %f, Speed %f" % (
 		#	traj_time_now, current_pos, target.pos, target.time, pos, dps)
 		#print traj_time_now
@@ -67,7 +65,7 @@ class TrajectoryControl:
 if __name__ == '__main__':
 	chain = DxlChain("COM3", 1000000)
 	chain.get_motor_list()
-	traj_ctrl = TrajectoryControl(1, chain)
+	traj_ctrl = TrajectoryControl(chain)
 
 	angle_list = [
 		-0.22509, -0.22448, -0.22386, -0.22324, -0.22262, -0.22200, -0.22138, -0.22075, -0.22013, -0.21950,
@@ -111,4 +109,4 @@ if __name__ == '__main__':
 				pos=angle * 57.295779, time=i * time_polit))
 		i += 1
 
-	traj_ctrl.traj_move(tar_list)
+	traj_ctrl.traj_move(1, tar_list)
