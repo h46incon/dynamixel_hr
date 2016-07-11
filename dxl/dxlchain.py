@@ -20,8 +20,9 @@ from collections import OrderedDict
 from post_threading import Post
 
 
-    
-        
+
+import timeit
+
         
 class DxlChain:
     """
@@ -503,12 +504,20 @@ class DxlChain:
 
         # calc speed value
         speed = None
-        if speed_dps != None:
+        if speed_dps is not None:
             if speed_dps < 0:
                 raise ValueError("rpm speed must great than zero")
-            speed = speed_dps / (motor.tick_to_rpm * 6)
+            elif speed_dps == 0:
+                speed = 0
+            else:
+                speed = int(speed_dps / (motor.tick_to_rpm * 6))
+                if speed == 0:
+                    speed = 1
+                if speed > 1023:
+                    speed = 0       # max speed
 
         self.goto(id, pos, speed, blocking)
+
     def goto(self,id,pos,speed=None,blocking=True):
         """
         Moves a motor to a position at a specified speed (or current speed if none provided) and waits for motion to be completed (unless blocking=False is passed).
