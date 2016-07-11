@@ -141,9 +141,10 @@ class DxlMotorMX12W(DxlMotorAXMX):
     model_name="MX12W"
     model_number=360
     documentation_url="http://support.robotis.com/en/product/dynamixel/mx_series/mx-12w.htm"
+    joint_pos_range=360
     tick_to_rad=0.00153588974175501002769284787627
     tick_to_rpm=0.114
-    joint_pos_range=360
+    tick_to_angle=float(joint_pos_range)/4095.0
 
     def __init__(self):
         DxlMotorAXMX.__init__(self)
@@ -162,9 +163,10 @@ class DxlMotorMX28(DxlMotorAXMX):
     model_name="MX28"
     model_number=29
     documentation_url="http://support.robotis.com/en/product/dynamixel/mx_series/mx-28.htm"
+    joint_pos_range=360
     tick_to_rad=0.00153588974175501002769284787627
     tick_to_rpm=0.114
-    joint_pos_range=360
+    tick_to_angle=float(joint_pos_range)/4095.0
 
     def __init__(self):
         DxlMotorAXMX.__init__(self)
@@ -183,9 +185,10 @@ class DxlMotorMX64(DxlMotorAXMX):
     model_name="MX64"
     model_number=310
     documentation_url="http://support.robotis.com/en/product/dynamixel/mx_series/mx-64.htm"
+    joint_pos_range=360
     tick_to_rad=0.00153588974175501002769284787627
     tick_to_rpm=0.114
-    joint_pos_range=360
+    tick_to_angle=float(joint_pos_range)/4095.0
 
     def __init__(self):
         DxlMotorAXMX.__init__(self)
