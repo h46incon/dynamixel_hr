@@ -480,7 +480,35 @@ class DxlChain:
             if self.get_reg(id,"moving")!=0:
                 return True
         return False
-                
+
+    def goto_phy(self,id,angle,speed_dps=None,blocking=True):
+        """
+        Moves a motor to a angle position (Middle position is 0)
+         at a specified degree/second speed (or current speed if none provided. 0 means maximum speed)
+         waits for motion to be completed (unless blocking=False is passed).
+        This is a blocking function by default.
+        """
+
+        motor = None
+        try:
+            motor = self.motors[id]
+        except KeyError:
+            raise ValueError("Could not find Motor, id: %d"%id)
+
+        # calc pos value
+        half_range = motor.joint_pos_range / 2.0;
+        if abs(angle) > half_range:
+            raise ValueError("goal angle (%f) out of range [-%f, +%f] "%(angle, half_range, half_range))
+        pos = (angle + half_range) / motor.tick_to_angle
+
+        # calc speed value
+        speed = None
+        if speed_dps != None:
+            if speed_dps < 0:
+                raise ValueError("rpm speed must great than zero")
+            speed = speed_dps / (motor.tick_to_rpm * 6)
+
+        self.goto(id, pos, speed, blocking)
     def goto(self,id,pos,speed=None,blocking=True):
         """
         Moves a motor to a position at a specified speed (or current speed if none provided) and waits for motion to be completed (unless blocking=False is passed).
