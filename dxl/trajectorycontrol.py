@@ -2,6 +2,15 @@ from collections import namedtuple
 from dxlchain import DxlChain
 
 TargetInfo = namedtuple("TargetInfo", ["pos", "time"])
+MotorTarget = namedtuple("MotorTarget", ["motor_id", "pos"])
+TimeTarget = namedtuple("TimeTarget", ["time", "motor_targets"])
+
+
+class TimeTarget:
+	def __init__(self):
+		self.ids = []  # type: list[int]
+		self.times = [] # type: list[float]
+		self.trajs = [] # type: list[list[float]]
 
 
 class TrajectoryControl:
@@ -9,6 +18,53 @@ class TrajectoryControl:
 
 	def __init__(self, chain):
 		self._chain = chain  # type: DxlChain
+		self._fast_move_time_threshold = 0.5
+
+	def multi_traj_move(self, time_target, begin_time=None):
+		"""
+		:type time_target: TimeTarget
+		:type begin_time: float
+		"""
+		if not time_target.times:
+			return
+
+		# TODO: wait to begin_time
+
+		# init fast speeds
+		speeds_max = [0] * len(time_target.ids)
+		in_max_spd = False
+
+		beg_time = self.default_timer()
+		for time_tar, positions in zip(time_target.times, time_target.trajs):
+			time_now = self.default_timer() - beg_time
+			time_diff = time_tar - time_now
+
+			# Move
+			if time_diff > self._fast_move_time_threshold:
+				# move with speed control
+				for m_id, pos in zip(time_target.ids, positions):
+					self._move_to( m_id, pos, time_tar, time_now, move_abs=True)
+				in_max_spd = False
+
+			else:
+				# Fast move
+				pos_regs = []
+				for m_id, pos_angle in zip(time_target.ids, positions):
+					pos_regs.append(self._chain.angle_to_pos_reg(m_id, pos_angle))
+
+				if in_max_spd:
+					self._chain.sync_write_pos(time_target.ids, pos_regs)
+				else:
+					self._chain.sync_write_pos_speed(time_target.ids, pos_regs, speeds_max)
+					in_max_spd = True
+
+
+			# Wait for next time
+			next_time_abs = beg_time + time_tar
+			print "next_time %f " % next_time_abs
+			while self.default_timer() < next_time_abs:
+				pass
+
 
 	def traj_move(self, id, tar_list):
 		"""
@@ -21,50 +77,48 @@ class TrajectoryControl:
 
 		beg_time = self.default_timer()
 		for target in tar_list:
-			time_diff = self.default_timer() - beg_time
-			self._move_to(id, target, time_diff, is_last_target=False)
+			traj_time = self.default_timer() - beg_time
+			self._move_to(id, target.pos, target.time, traj_time, move_abs=False)
 			next_time = beg_time + target.time
 			while self.default_timer() < next_time:
 				pass
 
-		time_diff = self.default_timer() - beg_time
-		self._move_to(id, last_tar, time_diff, is_last_target=True)
+		traj_time = self.default_timer() - beg_time
+		self._move_to(id, last_tar.pos, last_tar.time, traj_time, move_abs=True)
 
-	def _move_to(self, id, target, traj_time_now, is_last_target):
-		"""
-        :type target: TargetInfo
-        """
+	def _move_to(self, id, pos, time, time_now, move_abs):
 		current_pos = self._chain.get_pos_phy(id)
-		pos_diff = target.pos - current_pos
-		time_diff = target.time - traj_time_now
+		pos_diff = pos - current_pos
+		time_diff = time - time_now
 
 		dps = 0
-		pos = 0
+		action_pos = 0
 		if time_diff <= 0:
 			# too late for target, use max speed
 			dps = 0
-			pos = target.pos
+			action_pos = pos
 		else:
 			dps = abs(pos_diff) / time_diff
-			if is_last_target:
-				pos = target.pos
+			if move_abs:
+				action_pos = pos
 			else:
 				if pos_diff < 0:
-					pos = max(target.pos - 10, -180)
+					action_pos = max(pos - 10, -180)
 				elif pos_diff > 0:
-					pos = min(target.pos + 10, 180)
+					action_pos = min(pos + 10, 180)
 				else:
-					pos = target.pos
+					action_pos = pos
 
-		self._chain.goto_phy(id, pos, dps, blocking=False)
-		#print "[%f] pos %f to %f, Goal time: %f, Pos: %f, Speed %f" % (
-		#	traj_time_now, current_pos, target.pos, target.time, pos, dps)
-		#print traj_time_now
+		self._chain.goto_phy(id, action_pos, dps, blocking=False)
+
+	# print "[%f] pos %f to %f, Goal time: %f, Pos: %f, Speed %f" % (
+	#	traj_time_now, current_pos, target.pos, target.time, pos, dps)
+	# print traj_time_now
 
 
 if __name__ == '__main__':
 	chain = DxlChain("COM3", 1000000)
-	chain.get_motor_list()
+	print chain.get_motor_list()
 	traj_ctrl = TrajectoryControl(chain)
 
 	angle_list = [
@@ -101,12 +155,37 @@ if __name__ == '__main__':
 	]
 
 	time_polit = 0.001
-	tar_list = []
-	i = 1
-	for angle in angle_list:
-		if i % 10 == 0:
-			tar_list.append(TargetInfo(
-				pos=angle * 57.295779, time=i * time_polit))
-		i += 1
 
-	traj_ctrl.traj_move(1, tar_list)
+	if True:
+		tar_list = []
+		i = 1
+		for angle in angle_list:
+			if i % 10 == 0:
+				tar_list.append(TargetInfo(
+					pos=angle * 57.295779, time=i * time_polit))
+			i += 1
+
+		traj_ctrl.traj_move(1, tar_list)
+
+	if False:
+		time_target = TimeTarget()
+		time_target.ids = [1 ,2 ]
+		time_target.times.append(2)
+		time_target.trajs.append([-180] * 2)
+		time_target.times.append(3)
+		time_target.trajs.append([0] * 2)
+		time_target.times.append(4)
+		time_target.trajs.append([180] * 2)
+		traj_ctrl.multi_traj_move(time_target)
+
+	if False:
+		i = 1
+		for angle in angle_list:
+			if i % 10 == 0:
+				pos = angle * 57.296779
+				time_target.times.append(i * time_polit)
+				time_target.trajs.append([pos] * 2)
+			i += 1
+
+		traj_ctrl.multi_traj_move(time_target)
+
