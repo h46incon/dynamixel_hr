@@ -254,7 +254,16 @@ class DxlChain:
         if len(data)!=esize:        
             raise DxlCommunicationException,'Motor ID %d did not retrieve expected register %s size %d: got %d bytes'%(id,name,esize,len(data)) 
 
-    
+    def set_pid(self, id, p_gain, i_gain, d_gain):
+        """Set pid gain register value. The range of each gain is [0, 254]"""
+        if id not in self.motors.keys():
+            raise DxlConfigurationException,'Motor ID %d does not exist on the chain'%(id)
+        if not (0 <= p_gain <= 254 and 0 <= i_gain <= 254 and 0 <= d_gain <= 254):
+            raise DxlConfigurationException, 'pid gain out of range'
+        self.set_reg(id, "p_gain", p_gain)
+        self.set_reg(id, "i_gain", i_gain)
+        self.set_reg(id, "d_gain", d_gain)
+
     def sync_write_pos_speed(self,ids,positions,speeds): 
         """Performs a synchronized write of 'goal_pos' and 'moving_speed' registers for a set of motors (if possible)"""
         regpos=None
